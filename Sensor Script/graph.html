@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Sensor Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #chartContainer {
+            width: 100%;
+            height: 500px;
+        }
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        #backButton {
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #backButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Sensor Graph</h1>
+    <button id="backButton" onclick="goBack()">Back to Table</button>
+    <div id="chartContainer">
+        <canvas id="sensorChart"></canvas>
+    </div>
+
+    <script>
+        let chart;
+
+        async function fetchAndPlotData() {
+            try {
+                const response = await fetch('http://127.0.0.1:5500/SensorData.csv');
+                if (!response.ok) {
+                    console.error("Failed to fetch CSV:", response.status, response.statusText);
+                    return;
+                }
+                const data = await response.text();
+                const rows = data.split('\n').slice(1); // Skip headers
+
+                const timestamps = [];
+                const co2Data = [];
+                const temperatureData = [];
+                const humidityData = [];
+
+                rows.forEach(row => {
+                    if (row.trim()) {
+                        const [timestamp, co2, temperature, humidity] = row.split(',');
+                        timestamps.push(timestamp.trim());
+                        co2Data.push(parseFloat(co2.trim()));
+                        temperatureData.push(parseFloat(temperature.trim()));
+                        humidityData.push(parseFloat(humidity.trim()));
+                    }
+                });
+
+                plotData(timestamps, co2Data, temperatureData, humidityData);
+            } catch (error) {
+                console.error("Error fetching or plotting data:", error);
+            }
+        }
+
+        function plotData(timestamps, co2Data, temperatureData, humidityData) {
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+
+            if (chart) {
+                chart.destroy(); // Destroy previous chart if it exists
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'CO2 (ppm)',
+                            data: co2Data,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.4,
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: temperatureData,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            tension: 0.4,
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: humidityData,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Timestamp',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Values',
+                            },
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+        }
+
+        function goBack() {
+            window.location.href = 'sensorReader.html';
+        }
+
+        setInterval(fetchAndPlotData, 5000); // Refresh every 5 seconds
+        fetchAndPlotData(); // Initial load
+    </script>
+</body>
+</html>

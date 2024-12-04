@@ -6,6 +6,8 @@ from datetime import datetime
 from sensirion_i2c_driver import LinuxI2cTransceiver, I2cConnection
 from sensirion_i2c_scd import Scd4xI2cDevice
 import logging
+import csv
+import os
 
 # Set up logging for general information (SensorData.log)
 logging.basicConfig(
@@ -21,6 +23,15 @@ error_handler.setLevel(logging.ERROR)
 error_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 error_handler.setFormatter(error_formatter)
 logger.addHandler(error_handler)
+
+# CSV file path
+csv_output_path = '/home/tarek/SCD41/python-i2c-scd-master/examples/SensorData.csv'
+
+# Ensure CSV file exists and has headers
+if not os.path.exists(csv_output_path):
+    with open(csv_output_path, mode='w', newline='') as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(["Timestamp", "CO2 (ppm)", "Temperature (°C)", "Humidity (%)"])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--i2c-port', '-p', default='/dev/i2c-1')
@@ -58,6 +69,11 @@ try:
 
                 # Log the data to the SensorData.log file
                 logger.info(f"CO2: {co2}, Temperature: {temperature}, Humidity: {humidity}, {timestamp}")
+
+                # Write the data to the SensorData.csv file
+                with open(csv_output_path, mode='a', newline='') as file:
+                    csv_writer = csv.writer(file)
+                    csv_writer.writerow([timestamp, co2, temperature, humidity])
 
             except Exception as e:
                 logger.error(f"Error reading sensor data or logging: {str(e)}")
