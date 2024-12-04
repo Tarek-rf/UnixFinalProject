@@ -1,0 +1,17 @@
+[Unit]
+Description=Sensor Data Logger Service
+After=network.target
+
+[Service]
+Type=simple
+User=tarek
+ExecStart=/home/tarek/vanv/bin/python3 /home/tarek/SCD41/python-i2c-scd-master/examples/example_usage_linux_scd4x.py 
+WorkingDirectory=/home/tarek/SCD41/python-i2c-scd-master/examples
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/tarek/SCD41/python-i2c-scd-master/examples/SensorData.log
+StandardError=append:/home/tarek/SCD41/python-i2c-scd-master/examples/error.log
+
+[Install]
+WantedBy=multi-user.target
+
